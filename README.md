@@ -7,7 +7,7 @@ QQPilot ──POST /v1/chat/completions──▶ 本程序 ──透传──▶
           ◀── content / audios[] ──────┘
 ```
 
-QQPilot 会把回复里的 `choices[0].message.audios[]` 放成 QQ 语音消息（需要开启“下载远程音频”）。
+QQPilot(1.5.21+) 会把回复里的 `choices[0].message.audios[]` 放成 QQ 语音消息（需要开启“下载远程音频”）。
 本程序按配置把文本换成 `data:audio/<ext>;base64,...` 并**清空文本**，于是模型回复就变成了语音。
 
 ## 编译
