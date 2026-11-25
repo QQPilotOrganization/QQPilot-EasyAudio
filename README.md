@@ -16,7 +16,22 @@ QQPilot 会把回复里的 `choices[0].message.audios[]` 放成 QQ 语音消息�
 cargo build --release
 ```
 
-产物：`target\release\qqpilot-easy-audio.exe`。把 exe 和 `qqpilotEasyAudio.json` 放在同一个目录即可双击/开机自启。
+x64 + arm64 一起编译（和 QQPilot 的 `buildAll.cmd` 一样）：
+
+```powershell
+.\buildAll.cmd
+# 或
+cargo build --release --target=x86_64-pc-windows-msvc
+cargo build --release --target=aarch64-pc-windows-msvc
+```
+
+产物：`target\release\qqpilot-easy-audio.exe`（x64）、`target\aarch64-pc-windows-msvc\release\qqpilot-easy-audio.exe`（arm64）。
+
+> TLS 使用 Windows 自带的 SChannel（ureq 的 `native-tls` 特性），与 QQPilot 自身的 reqwest 一致。
+> 交叉编译 arm64 **不需要 clang/LLVM**；若换成 rustls，ring 会要求 clang，反而编译不了。
+> 注意：Windows 沙箱环境会禁止 Schannel 发起 HTTPS（`SEC_E_NO_CREDENTIALS`），这是系统限制，正常桌面运行不受影响。
+
+把 exe 和 `qqpilotEasyAudio.json` 放在同一个目录即可双击/开机自启。
 
 ## 运行
 

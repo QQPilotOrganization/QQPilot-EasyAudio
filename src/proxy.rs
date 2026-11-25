@@ -9,13 +9,15 @@ use crate::http::HttpRequest;
 
 /// 创建统一配置的 HTTP 客户端。
 ///
-/// 项目启用的是 ureq 的 `rustls` 特性（默认 TLS provider 就是 Rustls）。
-/// 这里显式写出来，避免以后调整特性时出现 "provider is Rustls but feature
-/// is not enabled" 的 panic。
+/// 使用 Windows 自带的 SChannel（`native-tls`），与 QQPilot 自身的 reqwest 一致：
+/// 不需要 clang，也不需要给 aarch64 交叉编译准备 C 工具链。
+///
+/// 注意 ureq 的 TLS provider 默认是 Rustls，必须显式指定 NativeTls，
+/// 否则会 panic（provider is Rustls but feature is not enabled）。
 pub fn agent_with_timeout(timeout: Duration) -> Agent {
     let tls = ureq::tls::TlsConfig::builder()
-        .provider(ureq::tls::TlsProvider::Rustls)
-        .root_certs(ureq::tls::RootCerts::WebPki)
+        .provider(ureq::tls::TlsProvider::NativeTls)
+        .root_certs(ureq::tls::RootCerts::PlatformVerifier)
         .build();
 
     ureq::Agent::config_builder()
