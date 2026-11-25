@@ -137,7 +137,24 @@ cargo build --release --target=aarch64-pc-windows-msvc
 - `{input}` 会替换成写入待朗读文本的 UTF-8 `input.txt` 路径。
 - `{output}` 会替换成程序需要生成的音频文件路径（扩展名由 `extension` 决定）。
 - 程序退出码必须为 0，且 `{output}` 文件必须存在、非空。
-- 音频格式只能 `wav`（QQPilot 用 miniaudio 播放）。
+- 音频格式只能 `wav`（QQPilot 用 `miniaudio` 播放）。
+
+#### 推荐使用edge-tts
+
+```
+pip install edge-tts
+```
+
+设置
+
+```json
+"TTSMode": {
+    "mode": "exe",
+    "exec": "edge-tts -v zh-CN-XiaoxiaoNeural -f {input} --write-media {output}",
+    "extension": "wav",
+    "timeoutSeconds": 120
+}
+```
 
 ### TTS 后端二：`remote`
 
