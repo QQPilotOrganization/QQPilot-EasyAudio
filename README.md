@@ -59,7 +59,7 @@ cargo build --release
 | 字段 | 说明 |
 |---|---|
 | `host` / `port` | 监听地址。端口也兼容旧写法 `post`。 |
-| `upstream.server` | 真正的 LLM 站点根地址。写 `https://api.deepseek.com` 或 `https://api.deepseek.com/v1` 都可以，程序会自动去重。 |
+| `upstream.server` | 真正的 LLM 地址。写站点根 `https://api.deepseek.com`、带版本 `https://api.deepseek.com/v1`，或完整端点 `https://api.deepseek.com/v1/chat/completions` 都可以。 |
 | `upstream.apiKey` | 留空则**透传 QQPilot 发来的 `Authorization`**；填写则使用这里的 Key。 |
 | `upstream.timeoutSeconds` | 上游请求超时，默认 300。 |
 | `TTSSelectMode` | `random`：按概率合成；`tool`：注入工具由模型决定。 |
@@ -112,7 +112,7 @@ cargo build --release
 ```json
 "TTSMode": {
     "mode": "exe",
-    "exec": "\"C:\\Tools\\tts.exe\" -i {input} -o {output}",
+    "exec": "\"C:\\Tools\\tts.exe\" -f {input} -o {output}",
     "extension": "wav",
     "timeoutSeconds": 120
 }
@@ -122,7 +122,7 @@ cargo build --release
 - `{input}` 会替换成写入待朗读文本的 UTF-8 `input.txt` 路径。
 - `{output}` 会替换成程序需要生成的音频文件路径（扩展名由 `extension` 决定）。
 - 程序退出码必须为 0，且 `{output}` 文件必须存在、非空。
-- 音频格式建议 `wav` / `mp3` / `flac`（QQPilot 用 miniaudio 播放）。
+- 音频格式只能 `wav`（QQPilot 用 miniaudio 播放）。
 
 ### TTS 后端二：`remote`
 

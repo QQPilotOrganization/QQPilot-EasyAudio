@@ -152,11 +152,7 @@ fn synthesize_with_remote(
     timeout: Duration,
 ) -> Result<Audio, String> {
     let payload = substitute(input, text);
-    let agent: ureq::Agent = ureq::Agent::config_builder()
-        .timeout_global(Some(timeout))
-        .http_status_as_error(false)
-        .build()
-        .into();
+    let agent = crate::proxy::agent_with_timeout(timeout);
 
     let mut request = agent
         .post(server)

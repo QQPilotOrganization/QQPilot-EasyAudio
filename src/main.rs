@@ -124,11 +124,7 @@ struct Server {
 
 impl Server {
     fn new(config: Config) -> Self {
-        let upstream: ureq::Agent = ureq::Agent::config_builder()
-            .timeout_global(Some(config.upstream.timeout))
-            .http_status_as_error(false)
-            .build()
-            .into();
+        let upstream = proxy::agent_with_timeout(config.upstream.timeout);
         Self { config, upstream }
     }
 

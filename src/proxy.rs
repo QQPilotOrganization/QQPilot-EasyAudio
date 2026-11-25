@@ -1,9 +1,30 @@
 //! 把请求透传给真正的 LLM 上游。
 
+use std::time::Duration;
+
 use ureq::Agent;
 
 use crate::config::Config;
 use crate::http::HttpRequest;
+
+/// 创建统一配置的 HTTP 客户端。
+///
+/// 项目启用的是 ureq 的 `rustls` 特性（默认 TLS provider 就是 Rustls）。
+/// 这里显式写出来，避免以后调整特性时出现 "provider is Rustls but feature
+/// is not enabled" 的 panic。
+pub fn agent_with_timeout(timeout: Duration) -> Agent {
+    let tls = ureq::tls::TlsConfig::builder()
+        .provider(ureq::tls::TlsProvider::Rustls)
+        .root_certs(ureq::tls::RootCerts::WebPki)
+        .build();
+
+    ureq::Agent::config_builder()
+        .timeout_global(Some(timeout))
+        .http_status_as_error(false)
+        .tls_config(tls)
+        .build()
+        .into()
+}
 
 /// 上游返回的原始响应。
 #[derive(Debug)]
@@ -87,20 +108,40 @@ fn should_skip_header(name: &str) -> bool {
 
 /// 拼接上游地址，并去掉重复的 `/v1`、`/api` 前缀。
 ///
-/// 兼容两种填法：`server` 写站点根 `https://host`，或者写 `https://host/v1`。
+/// 兼容三种填法：
+/// * 站点根：`https://host`
+/// * 带版本：`https://host/v1`
+/// * 完整端点：`https://host/v1/chat/completions`
 pub fn join_url(base: &str, path: &str) -> String {
     let base = base.trim_end_matches('/');
-    let mut path = path.to_string();
-    if !path.starts_with('/') {
-        path.insert(0, '/');
+    let (path_only, query) = match path.split_once('?') {
+        Some((path_only, query)) => (path_only, Some(query)),
+        None => (path, None),
+    };
+    let mut path = if path_only.starts_with('/') {
+        path_only.to_string()
+    } else {
+        format!("/{path_only}")
+    };
+
+    // 直接填了完整端点：原样使用，只把查询串带过去。
+    if base.ends_with("/chat/completions") && path.ends_with("/chat/completions") {
+        return match query {
+            Some(query) => format!("{base}?{query}"),
+            None => base.to_string(),
+        };
     }
+
     for segment in ["/v1", "/api"] {
         if base.ends_with(segment) && path.starts_with(&format!("{segment}/")) {
             path = path[segment.len()..].to_string();
             break;
         }
     }
-    format!("{base}{path}")
+    match query {
+        Some(query) => format!("{base}{path}?{query}"),
+        None => format!("{base}{path}"),
+    }
 }
 
 #[cfg(test)]
@@ -132,6 +173,24 @@ mod tests {
         assert_eq!(
             join_url("https://host", "/v1/models?x=1"),
             "https://host/v1/models?x=1"
+        );
+    }
+
+    #[test]
+    fn accepts_full_chat_completions_endpoint() {
+        assert_eq!(
+            join_url(
+                "https://api.siliconflow.cn/v1/chat/completions",
+                "/v1/chat/completions"
+            ),
+            "https://api.siliconflow.cn/v1/chat/completions"
+        );
+        assert_eq!(
+            join_url(
+                "https://api.siliconflow.cn/v1/chat/completions/",
+                "/v1/chat/completions?x=1"
+            ),
+            "https://api.siliconflow.cn/v1/chat/completions?x=1"
         );
     }
 }
