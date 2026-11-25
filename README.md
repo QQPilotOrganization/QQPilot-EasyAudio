@@ -1,4 +1,5 @@
-# qqpilot-easy-audio
+# QQPilot-EasyAudio
+
 
 给 [QQPilot](https://github.com/QQPilotOrganization/QQPilot) 用的 **Chat Completion 中转 + TTS 响应改写器**。
 
